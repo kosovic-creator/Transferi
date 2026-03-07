@@ -25,6 +25,20 @@ function formatTimeInputValue(date: Date): string {
   return `${hours}:${minutes}`
 }
 
+function generateHoursOptions() {
+  return Array.from({ length: 24 }, (_, i) => {
+    const value = String(i).padStart(2, "0")
+    return { value, label: value }
+  })
+}
+
+function generateMinutesOptions() {
+  return Array.from({ length: 60 }, (_, i) => {
+    const value = String(i).padStart(2, "0")
+    return { value, label: value }
+  })
+}
+
 function relacijaToValue(relacija: "APARTMAN_AERODROM" | "AERODROM_APARTMAN"): string {
   if (relacija === "APARTMAN_AERODROM") {
     return "apartman-aerodrom"
@@ -42,6 +56,11 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
   if (!transfer) {
     notFound()
   }
+
+  const timeValue = formatTimeInputValue(transfer.vrijeme)
+  const [defaultHour, defaultMinute] = timeValue.split(":")
+  const hours = generateHoursOptions()
+  const minutes = generateMinutesOptions()
 
   async function handleUpdate(formData: FormData) {
     "use server"
@@ -103,15 +122,37 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
             />
           </label>
 
-          <label className="grid gap-1">
+          <div className="grid gap-1">
             <span className="text-sm font-medium">Vrijeme</span>
-            <input
-              type="time"
-              name="vrijeme"
-              defaultValue={formatTimeInputValue(transfer.vrijeme)}
-              className="h-10 rounded-md border bg-background px-3 text-sm"
-            />
-          </label>
+            <div className="flex gap-2">
+              <select
+                id="sat"
+                defaultValue={defaultHour}
+                className="h-10 rounded-md border bg-background px-3 text-sm flex-1"
+              >
+                <option value="">Sat</option>
+                {hours.map((h) => (
+                  <option key={h.value} value={h.value}>
+                    {h.label}
+                  </option>
+                ))}
+              </select>
+              <span className="flex items-center">:</span>
+              <select
+                id="minuta"
+                defaultValue={defaultMinute}
+                className="h-10 rounded-md border bg-background px-3 text-sm flex-1"
+              >
+                <option value="">Min</option>
+                {minutes.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <input type="hidden" name="vrijeme" id="vrijeme-hidden" defaultValue={timeValue} />
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -154,6 +195,39 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
           Sačuvaj izmjene
         </button>
       </form>
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const form = document.querySelector('form');
+              const satSelect = document.getElementById('sat');
+              const minutaSelect = document.getElementById('minuta');
+              const vrijemeHidden = document.getElementById('vrijeme-hidden');
+
+              function updateVrijeme() {
+                const sat = satSelect.value.padStart(2, '0');
+                const minuta = minutaSelect.value.padStart(2, '0');
+                if (sat && minuta) {
+                  vrijemeHidden.value = sat + ':' + minuta;
+                }
+              }
+
+              satSelect.addEventListener('change', updateVrijeme);
+              minutaSelect.addEventListener('change', updateVrijeme);
+
+              form.addEventListener('submit', function(e) {
+                if (!satSelect.value || !minutaSelect.value) {
+                  e.preventDefault();
+                  alert('Molimo odaberite i sat i minuta');
+                  return false;
+                }
+                updateVrijeme();
+              });
+            })();
+          `,
+        }}
+      />
     </main>
   )
 }

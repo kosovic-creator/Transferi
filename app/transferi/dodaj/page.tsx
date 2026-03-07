@@ -42,6 +42,8 @@ export default function DodajTransferPage() {
 	const [datum, setDatum] = useState<Date | undefined>()
 	const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [sat, setSat] = useState("")
+	const [minuta, setMinuta] = useState("")
 	const today = useMemo(() => {
 		const now = new Date()
 		now.setHours(0, 0, 0, 0)
@@ -55,6 +57,21 @@ export default function DodajTransferPage() {
 
 		return format(datum, "yyyy-MM-dd")
 	}, [datum])
+
+	const vrijemeString = useMemo(() => {
+		if (!sat || !minuta) {
+			return ""
+		}
+		return `${sat.padStart(2, "0")}:${minuta.padStart(2, "0")}`
+	}, [sat, minuta])
+
+	const sati = useMemo(() => {
+		return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"))
+	}, [])
+
+	const minute = useMemo(() => {
+		return Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"))
+	}, [])
 
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-10">
@@ -75,6 +92,8 @@ export default function DodajTransferPage() {
 						toast.success("Transfer je uspjesno dodat.")
 						setRelacija("")
 						setDatum(undefined)
+						setSat("")
+						setMinuta("")
 						setTimeout(() => {
                             router.push("/")
 						}, 800)
@@ -88,6 +107,7 @@ export default function DodajTransferPage() {
 			>
 				<input type="hidden" name="relacija" value={relacija} required />
 				<input type="hidden" name="datum" value={datumString} required />
+				<input type="hidden" name="vrijeme" value={vrijemeString} required />
 
 				<div className="space-y-2">
 					<label className="text-sm font-medium">Relacija</label>
@@ -113,25 +133,44 @@ export default function DodajTransferPage() {
 
 				<div className="space-y-2">
 					<label className="text-sm font-medium">Datum</label>
-					<div className="flex flex-col gap-2 sm:flex-row">
-						<Input
-							value={datum ? format(datum, "dd.MM.yyyy") : ""}
-							readOnly
-							placeholder="Izaberi datum"
-						/>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => setIsCalendarOpen(true)}
-						>
-							Otvori kalendar
-						</Button>
-					</div>
+					<Input
+						value={datum ? format(datum, "dd.MM.yyyy") : ""}
+						readOnly
+						placeholder="Izaberi datum"
+						onClick={() => setIsCalendarOpen(true)}
+						className="cursor-pointer"
+					/>
 				</div>
 
 				<div className="space-y-2">
 					<label className="text-sm font-medium">Vrijeme</label>
-					<Input name="vrijeme" type="time" required />
+					<div className="flex gap-2">
+						<Select value={sat} onValueChange={(value) => setSat(value ?? "")}>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Sat" />
+							</SelectTrigger>
+							<SelectContent>
+								{sati.map((h) => (
+									<SelectItem key={h} value={h}>
+										{h}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<span className="flex items-center text-lg">:</span>
+						<Select value={minuta} onValueChange={(value) => setMinuta(value ?? "")}>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Minuta" />
+							</SelectTrigger>
+							<SelectContent>
+								{minute.map((m) => (
+									<SelectItem key={m} value={m}>
+										{m}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
 				</div>
 
 				<div className="space-y-2">
