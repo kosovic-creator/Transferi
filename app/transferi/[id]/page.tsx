@@ -48,9 +48,9 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
 
     try {
       await updateTransfer(formData)
-      redirect("/transferi?toast=updated")
+        redirect("/?toast=updated")
     } catch {
-      redirect("/transferi?toast=update-error")
+        redirect("/?toast=update-error")
     }
   }
 
@@ -59,7 +59,7 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Izmijeni transfer</h1>
         <Link
-          href="/transferi"
+                  href="/"
           className="inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
         >
           Nazad na listu

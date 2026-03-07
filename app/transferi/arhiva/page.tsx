@@ -140,7 +140,7 @@ export default async function ArhivaTransferaPage({ searchParams }: ArhivaPagePr
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Arhiva transfera</h1>
         <Link
-          href="/transferi"
+                  href="/"
           className="inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
         >
           Nazad na transferi

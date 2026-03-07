@@ -76,7 +76,7 @@ export default function DodajTransferPage() {
 						setRelacija("")
 						setDatum(undefined)
 						setTimeout(() => {
-							router.push("/transferi")
+                            router.push("/")
 						}, 800)
 					} catch (e) {
 						const message =
