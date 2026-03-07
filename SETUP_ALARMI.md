@@ -33,6 +33,7 @@ Uredi `.env`:
 ```env
 DATABASE_URL="postgresql://..."
 CRON_SECRET="<random-string-iz-openssl>"
+TRANSFER_TIMEZONE="Europe/Podgorica"
 VAPID_SUBJECT="mailto:tvoj-email@example.com"
 VAPID_PUBLIC_KEY="<public-key-iz-generatora>"
 VAPID_PRIVATE_KEY="<private-key-iz-generatora>"
@@ -40,6 +41,8 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY="<isti-kao-VAPID_PUBLIC_KEY>"
 ```
 
 **Napomena:** `NEXT_PUBLIC_VAPID_PUBLIC_KEY` mora biti identičan kao `VAPID_PUBLIC_KEY`.
+
+`TRANSFER_TIMEZONE` definise lokalnu vremensku zonu po kojoj se procjenjuje da li je transfer dospio za slanje (npr. `Europe/Podgorica`).
 
 ## 2. Primijeni migraciju u bazi
 
@@ -136,15 +139,45 @@ curl -X GET http://localhost:3000/api/jobs/send-transfer-reminders \
 Ili preko query parametra:
 
 ```bash
-curl -X GET "http://localhost:3000/api/jobs/send-transfer-reminders?secret=<CRON_SECRET>"
+curl -G "http://localhost:3000/api/jobs/send-transfer-reminders" \
+  --data-urlencode "secret=<CRON_SECRET>"
 ```
+
+Ili direktno sa konkretnom vrijednoscu:
+
+```bash
+curl -G "http://localhost:3000/api/jobs/send-transfer-reminders" \
+  --data-urlencode "secret=seE7jaCATUhh2R3U5rZm52EAz6iogn+TimTzjY+ddZ8="
+```
+
+Ili preko Authorization headera:
+
+```bash
+curl -X GET "http://localhost:3000/api/jobs/send-transfer-reminders" \
+  -H "Authorization: Bearer seE7jaCATUhh2R3U5rZm52EAz6iogn+TimTzjY+ddZ8="
+```
+
+Napomena: ako `CRON_SECRET` sadrzi `+`, `/` ili `=`, mora biti URL-enkodovan.
 
 Odgovor bi trebao biti:
 ```json
 {
   "ok": true,
+  "transferTimeZone": "Europe/Podgorica",
+  "localNow": { "date": "2026-03-07", "time": "18:30:00" },
+  "dueTransfersCount": 1,
   "processedTransfers": 1,
-  "sentNotifications": 1
+  "sentNotifications": 1,
+  "debugLog": [
+    {
+      "transferId": "...",
+      "korisnik": "John Wein",
+      "matchedBy": "userKey",
+      "subscriptionCount": 1,
+      "sentNotifications": 1,
+      "failedNotifications": 0
+    }
+  ]
 }
 ```
 
