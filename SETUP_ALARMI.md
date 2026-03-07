@@ -113,7 +113,7 @@ Možeš ručno testirati endpoint:
 curl -X GET http://localhost:3000/api/jobs/send-transfer-reminders \
   -H "Authorization: Bearer <CRON_SECRET>"
 ```
-
+a
 Odgovor bi trebao biti:
 ```json
 {
