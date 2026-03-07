@@ -72,24 +72,17 @@ export async function GET(request: Request) {
     const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
     const localNow = getLocalNowDateAndTime(transferTimeZone)
 
+  // Dodaj 1 sat (60 minuta) na trenutno vrijeme za provjeru
+  const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000)
+
   const dueTransfers = await prisma.transfer.findMany({
     where: {
       alarmEnabled: true,
       alarmSentAt: null,
-          OR: [
-              {
-                  datum: {
-                      lt: localNow.date,
-                  },
-              },
-              {
-                  datum: localNow.date,
-                  vrijeme: {
-                      lte: localNow.time,
-                  },
-              },
-          ],
+      datumVrijemeUtc: {
+        lte: oneHourFromNow,
       },
+    },
     orderBy: [{ datumVrijemeUtc: "asc" }, { id: "asc" }],
     take: 100,
   })
@@ -132,8 +125,8 @@ export async function GET(request: Request) {
       let removedExpiredForTransfer = 0
 
     const payload = {
-      title: "Vrijeme je za transfer",
-      body: `${relacijaToLabel(transfer.relacija)} u ${transfer.vrijeme
+      title: "Podsjetnik za transfer",
+      body: `${relacijaToLabel(transfer.relacija)} za 1 sat - u ${transfer.vrijeme
         .toISOString()
         .slice(11, 16)}`,
       url: `/transferi/${transfer.id}`,
@@ -192,6 +185,7 @@ export async function GET(request: Request) {
           date: localNow.date.toISOString().slice(0, 10),
           time: localNow.time.toISOString().slice(11, 19),
       },
+    reminderWindow: "1 hour before transfer",
       dueTransfersCount: dueTransfers.length,
     processedTransfers,
     sentNotifications,
