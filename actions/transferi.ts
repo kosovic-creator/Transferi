@@ -44,6 +44,7 @@ export async function createTransfer(formData: FormData): Promise<TransferRecord
   })
 
   revalidatePath("/transferi")
+  revalidatePath("/")
   revalidatePath("/transferi/dodaj")
 
   return transfer
@@ -82,6 +83,7 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
   })
 
   revalidatePath("/transferi")
+  revalidatePath("/")
   revalidatePath("/transferi/arhiva")
 
   return transfer
@@ -109,6 +111,7 @@ export async function deleteTransfer(formData: FormData): Promise<TransferRecord
   })
 
   revalidatePath("/transferi")
+  revalidatePath("/")
   revalidatePath("/transferi/arhiva")
 
   return transfer

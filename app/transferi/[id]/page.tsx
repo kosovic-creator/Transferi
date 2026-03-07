@@ -47,11 +47,12 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
     "use server"
 
     try {
-      await updateTransfer(formData)
-        redirect("/?toast=updated")
+        await updateTransfer(formData)
     } catch {
         redirect("/?toast=update-error")
     }
+
+      redirect("/?toast=updated")
   }
 
   return (

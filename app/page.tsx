@@ -50,48 +50,94 @@ export default async function Home({ searchParams }: HomePageProps) {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-8">
+    <main className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-100/60">
       <TransferiToast type={toast} />
 
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Transferi</h1>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/transferi/arhiva"
-            className="inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
-          >
-            Arhiva
-          </Link>
-          <Link
-            href="/transferi/dodaj"
-            className="inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
-          >
-            Dodaj transfer
-          </Link>
-        </div>
-      </div>
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">
+        <div className="mb-6 rounded-2xl border bg-card/80 p-4 shadow-sm backdrop-blur sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Transferi</h1>
+              <p className="text-sm text-muted-foreground">
+                Pregled, izmjena i brisanje transfera na jednom mjestu.
+              </p>
+            </div>
 
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="w-full min-w-[900px] border-collapse text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th className="px-3 py-2">Datum</th>
-              <th className="px-3 py-2">Vrijeme</th>
-              <th className="px-3 py-2">Relacija</th>
-              <th className="px-3 py-2">Iznos</th>
-              <th className="px-3 py-2">Korisnik</th>
-              <th className="px-3 py-2">Akcije</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transferi.length === 0 ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Link
+                href="/transferi/dodaj"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                Dodaj transfer
+              </Link>
+
+              <Link
+                href="/transferi/arhiva"
+                className="inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted"
+              >
+                Arhiva
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {transferi.length === 0 ? (
+          <div className="rounded-xl border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
+            Nema unesenih transfera.
+          </div>
+        ) : null}
+
+        <div className="grid gap-3 md:hidden">
+          {transferi.map((transfer) => (
+            <article key={transfer.id} className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-base font-semibold">{relacijaToValue(transfer.relacija)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDateDisplay(transfer.datum)} u {formatTimeDisplay(transfer.vrijeme)}
+                  </p>
+                </div>
+                <p className="text-sm font-medium">{transfer.iznos.toFixed(2)} EUR</p>
+              </div>
+
+              <p className="mb-3 text-sm text-muted-foreground">
+                Korisnik: <span className="font-medium text-foreground">{transfer.korisnik ?? "-"}</span>
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/transferi/${transfer.id}`}
+                  className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm font-medium hover:bg-muted"
+                >
+                  Izmijeni
+                </Link>
+
+                <DeleteTransferDialog
+                  id={transfer.id}
+                  datum={formatDateDisplay(transfer.datum)}
+                  vrijeme={formatTimeDisplay(transfer.vrijeme)}
+                  relacija={relacijaToValue(transfer.relacija)}
+                  action={handleDelete}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto rounded-xl border bg-card shadow-sm md:block">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead className="bg-muted/50 text-left">
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
-                  Nema unesenih transfera.
-                </td>
+                <th className="px-3 py-2">Datum</th>
+                <th className="px-3 py-2">Vrijeme</th>
+                <th className="px-3 py-2">Relacija</th>
+                <th className="px-3 py-2">Iznos</th>
+                <th className="px-3 py-2">Korisnik</th>
+                <th className="px-3 py-2">Akcije</th>
               </tr>
-            ) : (
-              transferi.map((transfer) => (
+            </thead>
+            <tbody>
+              {transferi.map((transfer) => (
                 <tr key={transfer.id} className="border-t align-top">
                   <td className="px-3 py-2">{formatDateDisplay(transfer.datum)}</td>
                   <td className="px-3 py-2">{formatTimeDisplay(transfer.vrijeme)}</td>
@@ -117,10 +163,10 @@ export default async function Home({ searchParams }: HomePageProps) {
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   )
