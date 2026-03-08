@@ -5,6 +5,7 @@ import { sendWebPush } from "@/lib/web-push"
 import { combineDateAndTimeUtc } from "@/actions/transfer-utils"
 
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 function getLocalNowDateAndTime(timeZone: string): { date: Date; time: Date } {
     const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -118,6 +119,8 @@ export async function GET(request: Request) {
 
   let sentNotifications = 0
   let processedTransfers = 0
+  let transfersMarkedAsSent = 0
+  let transfersPendingRetry = 0
     const debugLog: Array<{
         transferId: string
         korisnik: string | null
@@ -129,7 +132,8 @@ export async function GET(request: Request) {
         sentNotifications: number
         failedNotifications: number
         removedExpiredSubscriptions: number
-        alarmMarkedAt: string
+      alarmMarkedAt: string | null
+      retryReason: string | null
     }> = []
 
   for (const transfer of dueTransfers) {
@@ -185,11 +189,23 @@ export async function GET(request: Request) {
       }
     }
 
-      const markedAt = new Date()
-    await prisma.transfer.update({
-      where: { id: transfer.id },
-        data: { alarmSentAt: markedAt },
-    })
+    let alarmMarkedAt: Date | null = null
+    let retryReason: string | null = null
+
+    if (subscriptions.length === 0) {
+      retryReason = "Nema aktivnih push pretplata."
+      transfersPendingRetry += 1
+    } else if (sentForTransfer === 0) {
+      retryReason = "Svi pokušaji slanja su neuspješni."
+      transfersPendingRetry += 1
+    } else {
+      alarmMarkedAt = new Date()
+      await prisma.transfer.update({
+        where: { id: transfer.id },
+        data: { alarmSentAt: alarmMarkedAt },
+      })
+      transfersMarkedAsSent += 1
+    }
 
     processedTransfers += 1
       debugLog.push({
@@ -203,7 +219,8 @@ export async function GET(request: Request) {
           sentNotifications: sentForTransfer,
           failedNotifications: failedForTransfer,
           removedExpiredSubscriptions: removedExpiredForTransfer,
-          alarmMarkedAt: markedAt.toISOString(),
+        alarmMarkedAt: alarmMarkedAt?.toISOString() ?? null,
+        retryReason,
       })
   }
 
@@ -219,6 +236,8 @@ export async function GET(request: Request) {
     reminderWindowEndUtc: windowEnd.toISOString(),
       dueTransfersCount: dueTransfers.length,
     processedTransfers,
+    transfersMarkedAsSent,
+    transfersPendingRetry,
     sentNotifications,
       debugLog,
   })

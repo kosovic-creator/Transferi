@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendWebPush } from "@/lib/web-push"
 
+export const runtime = "nodejs"
+
 type SendNowRequest = {
   userKey?: string
   relacija?: string
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
   let sentCount = 0
   let failedCount = 0
   let removedExpiredCount = 0
+  const failureReasons = new Map<string, number>()
 
   for (const subscription of subscriptions) {
     try {
@@ -74,11 +77,33 @@ export async function POST(request: Request) {
       sentCount += 1
     } catch (error) {
       failedCount += 1
+
+      const errorMessage = error instanceof Error ? error.message : "Nepoznata greška pri slanju."
+      failureReasons.set(errorMessage, (failureReasons.get(errorMessage) ?? 0) + 1)
+
       if (isPushSubscriptionExpired(error)) {
         await prisma.pushSubscription.delete({ where: { endpoint: subscription.endpoint } })
         removedExpiredCount += 1
       }
     }
+  }
+
+  if (sentCount === 0 && failedCount > 0) {
+    return NextResponse.json(
+      {
+        error: "Push slanje nije uspjelo ni za jednu pretplatu.",
+        sentCount,
+        failedCount,
+        removedExpiredCount,
+        matchedSubscriptions: subscriptions.length,
+        matchedBy: userKey ? "userKey" : "fallback-all",
+        failureReasons: Array.from(failureReasons.entries()).map(([reason, count]) => ({
+          reason,
+          count,
+        })),
+      },
+      { status: 502 }
+    )
   }
 
   return NextResponse.json({
