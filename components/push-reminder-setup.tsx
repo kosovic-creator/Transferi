@@ -1,8 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
+
+type PushDiagnostics = {
+  standalone: boolean
+  iosSafari: boolean
+  notificationPermission: NotificationPermission | "unsupported"
+  serviceWorkerSupported: boolean
+  pushManagerSupported: boolean
+  serviceWorkerRegistered: boolean
+  hasSubscription: boolean
+  endpointPreview: string
+}
 
 function isIosSafari(): boolean {
   const ua = navigator.userAgent.toLowerCase()
@@ -38,6 +49,57 @@ export function PushReminderSetup() {
   const [userKey, setUserKey] = useState("")
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [diagnosticsBusy, setDiagnosticsBusy] = useState(false)
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null)
+  const [diagnostics, setDiagnostics] = useState<PushDiagnostics | null>(null)
+
+  async function refreshDiagnostics() {
+    try {
+      setDiagnosticsBusy(true)
+      setDiagnosticsError(null)
+
+      const serviceWorkerSupported = "serviceWorker" in navigator
+      const pushManagerSupported = "PushManager" in window
+      const notificationPermission =
+        typeof Notification === "undefined" ? "unsupported" : Notification.permission
+
+      let serviceWorkerRegistered = false
+      let hasSubscription = false
+      let endpointPreview = "-"
+
+      if (serviceWorkerSupported) {
+        const registration = await navigator.serviceWorker.getRegistration("/sw.js")
+        serviceWorkerRegistered = Boolean(registration)
+
+        if (registration && pushManagerSupported) {
+          const subscription = await registration.pushManager.getSubscription()
+          hasSubscription = Boolean(subscription)
+          if (subscription?.endpoint) {
+            endpointPreview = `${subscription.endpoint.slice(0, 48)}...`
+          }
+        }
+      }
+
+      setDiagnostics({
+        standalone: isStandaloneMode(),
+        iosSafari: isIosSafari(),
+        notificationPermission,
+        serviceWorkerSupported,
+        pushManagerSupported,
+        serviceWorkerRegistered,
+        hasSubscription,
+        endpointPreview,
+      })
+    } catch (error) {
+      setDiagnosticsError(error instanceof Error ? error.message : "Greška pri čitanju dijagnostike.")
+    } finally {
+      setDiagnosticsBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    void refreshDiagnostics()
+  }, [])
 
   async function enablePush() {
     try {
@@ -98,6 +160,7 @@ export function PushReminderSetup() {
       }
 
       setStatus("Podsetnici su uključeni za ovaj telefon. Testiraj sada slanje iz forme.")
+      await refreshDiagnostics()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Greška pri uključivanju podsetnika.")
     } finally {
@@ -126,6 +189,7 @@ export function PushReminderSetup() {
       }
 
       setStatus("Podsetnici su isključeni na ovom telefonu.")
+      await refreshDiagnostics()
     } catch {
       setStatus("Greška pri isključivanju podsetnika.")
     } finally {
@@ -171,6 +235,40 @@ export function PushReminderSetup() {
         >
           Isključi
         </Button>
+      </div>
+
+      <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-xs">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="font-medium">Push dijagnostika</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            onClick={() => {
+              void refreshDiagnostics()
+            }}
+            disabled={diagnosticsBusy}
+          >
+            {diagnosticsBusy ? "Osvježavam..." : "Osvježi dijagnostiku"}
+          </Button>
+        </div>
+
+        {diagnosticsError ? (
+          <p className="text-red-600">{diagnosticsError}</p>
+        ) : diagnostics ? (
+          <div className="grid gap-1 text-muted-foreground">
+            <p>Standalone (Home Screen): {diagnostics.standalone ? "da" : "ne"}</p>
+            <p>iOS Safari: {diagnostics.iosSafari ? "da" : "ne"}</p>
+            <p>Notification permission: {diagnostics.notificationPermission}</p>
+            <p>Service Worker podržan: {diagnostics.serviceWorkerSupported ? "da" : "ne"}</p>
+            <p>PushManager podržan: {diagnostics.pushManagerSupported ? "da" : "ne"}</p>
+            <p>SW registrovan (/sw.js): {diagnostics.serviceWorkerRegistered ? "da" : "ne"}</p>
+            <p>Aktivna subscription: {diagnostics.hasSubscription ? "da" : "ne"}</p>
+            <p>Endpoint: {diagnostics.endpointPreview}</p>
+          </div>
+        ) : (
+          <p className="text-muted-foreground">Dijagnostika nije dostupna.</p>
+        )}
       </div>
 
       {status ? <p className="mt-3 text-sm text-muted-foreground">{status}</p> : null}
