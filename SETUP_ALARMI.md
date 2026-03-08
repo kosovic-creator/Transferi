@@ -38,11 +38,18 @@ VAPID_SUBJECT="mailto:tvoj-email@example.com"
 VAPID_PUBLIC_KEY="<public-key-iz-generatora>"
 VAPID_PRIVATE_KEY="<private-key-iz-generatora>"
 NEXT_PUBLIC_VAPID_PUBLIC_KEY="<isti-kao-VAPID_PUBLIC_KEY>"
+
+# Opcionalno: SMS potvrda preko Twilio
+TWILIO_ACCOUNT_SID="<your-twilio-account-sid>"
+TWILIO_AUTH_TOKEN="<your-twilio-auth-token>"
+TWILIO_FROM_NUMBER="<your-twilio-phone-number>"
 ```
 
 **Napomena:** `NEXT_PUBLIC_VAPID_PUBLIC_KEY` mora biti identičan kao `VAPID_PUBLIC_KEY`.
 
 `TRANSFER_TIMEZONE` definise lokalnu vremensku zonu po kojoj se procjenjuje da li je transfer dospio za slanje (npr. `Europe/Podgorica`).
+
+Ako postaviš Twilio varijable, aplikacija šalje SMS potvrdu odmah nakon uspješno sačuvanog transfera (kada je upisan `brojTelefona`).
 
 ## 2. Primijeni migraciju u bazi
 
@@ -164,20 +171,11 @@ Odgovor bi trebao biti:
 {
   "ok": true,
   "transferTimeZone": "Europe/Podgorica",
-  "localNow": { "date": "2026-03-07", "time": "18:30:00" },
   "dueTransfersCount": 1,
   "processedTransfers": 1,
-  "sentNotifications": 1,
-  "debugLog": [
-    {
-      "transferId": "...",
-      "korisnik": "John Wein",
-      "matchedBy": "userKey",
-      "subscriptionCount": 1,
-      "sentNotifications": 1,
-      "failedNotifications": 0
-    }
-  ]
+  "transfersMarkedAsSent": 1,
+  "transfersPendingRetry": 0,
+  "sentNotifications": 1
 }
 ```
 

@@ -279,13 +279,14 @@ export default async function ArhivaTransferaPage({ searchParams }: ArhivaPagePr
               <TableHead>Ostale relacije</TableHead>
               <TableHead>Iznos</TableHead>
               <TableHead>Korisnik</TableHead>
+              <TableHead>Telefon</TableHead>
               <TableHead className="text-right">Akcija</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {query.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   Arhiva je prazna.
                 </TableCell>
               </TableRow>
@@ -298,6 +299,7 @@ export default async function ArhivaTransferaPage({ searchParams }: ArhivaPagePr
                   <TableCell>{transfer.ostaleRelacije ?? "-"}</TableCell>
                   <TableCell>{transfer.iznos.toFixed(2)}</TableCell>
                   <TableCell>{transfer.korisnik ?? "-"}</TableCell>
+                  <TableCell>{transfer.brojTelefona ?? "-"}</TableCell>
                   <TableCell className="text-right">
                     <form action={handleRestore} className="inline-flex">
                       <input type="hidden" name="id" value={transfer.id} />

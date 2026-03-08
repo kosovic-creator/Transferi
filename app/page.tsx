@@ -82,9 +82,9 @@ export default async function Home({ searchParams }: HomePageProps) {
            </div>
         </div>
 
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <PushReminderSetup />
-        </div>
+        </div> */}
 
         {transferi.length === 0 ? (
           <div className="rounded-xl border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
@@ -107,6 +107,10 @@ export default async function Home({ searchParams }: HomePageProps) {
 
               <p className="mb-3 text-sm text-muted-foreground">
                 Korisnik: <span className="font-medium text-foreground">{transfer.korisnik ?? "-"}</span>
+              </p>
+
+              <p className="mb-3 text-sm text-muted-foreground">
+                Telefon: <span className="font-medium text-foreground">{transfer.brojTelefona ?? "-"}</span>
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -138,6 +142,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                 <th className="px-3 py-2">Relacija</th>
                 <th className="px-3 py-2">Iznos</th>
                 <th className="px-3 py-2">Korisnik</th>
+                <th className="px-3 py-2">Telefon</th>
                 <th className="px-3 py-2">Akcije</th>
               </tr>
             </thead>
@@ -149,6 +154,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                   <td className="px-3 py-2">{relacijaToValue(transfer.relacija)}</td>
                   <td className="px-3 py-2">{transfer.iznos.toFixed(2)}</td>
                   <td className="px-3 py-2">{transfer.korisnik ?? "-"}</td>
+                  <td className="px-3 py-2">{transfer.brojTelefona ?? "-"}</td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap items-start gap-2">
                       <Link

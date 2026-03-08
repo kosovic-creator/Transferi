@@ -175,6 +175,16 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
               className="h-10 rounded-md border bg-background px-3 text-sm"
             />
           </label>
+
+          <label className="grid gap-1 sm:col-span-2">
+            <span className="text-sm font-medium">Broj telefona</span>
+            <input
+              name="brojTelefona"
+              defaultValue={transfer.brojTelefona ?? ""}
+              placeholder="npr. +38269111222"
+              className="h-10 rounded-md border bg-background px-3 text-sm"
+            />
+          </label>
         </div>
 
         <label className="flex items-center gap-2 text-sm">

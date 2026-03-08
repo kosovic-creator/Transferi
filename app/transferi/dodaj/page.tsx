@@ -45,6 +45,7 @@ export default function DodajTransferPage() {
 	const [sat, setSat] = useState("")
 	const [minuta, setMinuta] = useState("")
 	const [korisnik, setKorisnik] = useState("")
+	const [brojTelefona, setBrojTelefona] = useState("")
 	const [sendNowChecked, setSendNowChecked] = useState(false)
 	const [sendingNow, setSendingNow] = useState(false)
 	const today = useMemo(() => {
@@ -138,6 +139,15 @@ export default function DodajTransferPage() {
 					setSat("")
 					setMinuta("")
 					setKorisnik("")
+					setBrojTelefona("")
+
+					if (result.sms.status === "sent") {
+						toast.success("SMS potvrda je poslata.")
+					}
+
+					if (result.sms.status === "failed") {
+						toast.error(`Transfer je sačuvan, ali SMS nije poslat: ${result.sms.error}`)
+					}
 					setTimeout(() => {
 						router.push("/")
 					}, 800)
@@ -223,6 +233,16 @@ export default function DodajTransferPage() {
 						placeholder="Ime korisnika"
 						value={korisnik}
 						onChange={(event) => setKorisnik(event.target.value)}
+					/>
+				</div>
+
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Broj telefona (opciono)</label>
+					<Input
+						name="brojTelefona"
+						placeholder="npr. +38269111222"
+						value={brojTelefona}
+						onChange={(event) => setBrojTelefona(event.target.value)}
 					/>
 				</div>
 

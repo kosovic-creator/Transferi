@@ -195,6 +195,7 @@ export async function restoreTransferFromArhiva(
         alarmEnabled: archived.alarmEnabled,
         alarmSentAt: archived.alarmSentAt,
         korisnik: archived.korisnik,
+        brojTelefona: archived.brojTelefona,
       },
     })
 

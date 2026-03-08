@@ -13,6 +13,7 @@ import {
   parseRelacija,
   parseTimeOnly,
 } from "@/actions/transfer-utils"
+import { sendTransferReceivedSms, type SmsSendResult } from "@/lib/twilio-sms"
 
 function addMinutesToTime(time: Date, minutes: number): Date {
   return new Date(time.getTime() + minutes * 60 * 1000)
@@ -88,6 +89,7 @@ export async function createTransfer(formData: FormData): Promise<TransferRecord
       datumVrijemeUtc,
       alarmEnabled,
       korisnik: getOptionalString(formData, "korisnik"),
+      brojTelefona: getOptionalString(formData, "brojTelefona"),
     },
   })
 
@@ -99,13 +101,28 @@ export async function createTransfer(formData: FormData): Promise<TransferRecord
 }
 
 type CreateTransferResult =
-  | { ok: true; transfer: TransferRecord }
+  | { ok: true; transfer: TransferRecord; sms: SmsSendResult }
   | { ok: false; error: string }
 
 export async function createTransferSafe(formData: FormData): Promise<CreateTransferResult> {
   try {
     const transfer = await createTransfer(formData)
-    return { ok: true, transfer }
+    let sms: SmsSendResult = {
+      status: "skipped",
+      reason: "Broj telefona nije unesen.",
+    }
+
+    if (transfer.brojTelefona) {
+      sms = await sendTransferReceivedSms({
+        to: transfer.brojTelefona,
+        transferId: transfer.id,
+        relacija: transfer.relacija,
+        datum: transfer.datum,
+        vrijeme: transfer.vrijeme,
+      })
+    }
+
+    return { ok: true, transfer, sms }
   } catch (error) {
     const message =
       error instanceof Error && error.message
@@ -179,6 +196,9 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
       korisnik: formData.has("korisnik")
         ? getOptionalString(formData, "korisnik")
         : undefined,
+      brojTelefona: formData.has("brojTelefona")
+        ? getOptionalString(formData, "brojTelefona")
+        : undefined,
     },
   })
 
@@ -207,6 +227,7 @@ export async function deleteTransfer(formData: FormData): Promise<TransferRecord
         alarmEnabled: deleted.alarmEnabled,
         alarmSentAt: deleted.alarmSentAt,
         korisnik: deleted.korisnik,
+        brojTelefona: deleted.brojTelefona,
       },
     })
 

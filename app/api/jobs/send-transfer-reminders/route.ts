@@ -7,31 +7,6 @@ import { combineDateAndTimeUtc } from "@/actions/transfer-utils"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-function getLocalNowDateAndTime(timeZone: string): { date: Date; time: Date } {
-    const formatter = new Intl.DateTimeFormat("en-CA", {
-        timeZone,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-    })
-
-    const parts = formatter.formatToParts(new Date())
-    const part = (type: Intl.DateTimeFormatPartTypes): string =>
-        parts.find((p) => p.type === type)?.value ?? "00"
-
-    const dateIso = `${part("year")}-${part("month")}-${part("day")}`
-    const timeIso = `${part("hour")}:${part("minute")}:${part("second")}`
-
-    return {
-        date: new Date(`${dateIso}T00:00:00.000Z`),
-        time: new Date(`1970-01-01T${timeIso}.000Z`),
-    }
-}
-
 function isAuthorized(request: Request, cronSecret: string): boolean {
     const authorization = request.headers.get("authorization")
     if (authorization === `Bearer ${cronSecret}`) {
@@ -71,8 +46,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Nedozvoljen pristup." }, { status: 401 })
   }
 
-    const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
-    const localNow = getLocalNowDateAndTime(transferTimeZone)
+  const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
 
   // Salji podsjetnik u prozoru oko 60 minuta prije transfera.
   const now = new Date()
@@ -121,20 +95,6 @@ export async function GET(request: Request) {
   let processedTransfers = 0
   let transfersMarkedAsSent = 0
   let transfersPendingRetry = 0
-    const debugLog: Array<{
-        transferId: string
-        korisnik: string | null
-        relacija: string
-        datum: string
-        vrijeme: string
-        matchedBy: "userKey" | "fallback-all"
-        subscriptionCount: number
-        sentNotifications: number
-        failedNotifications: number
-        removedExpiredSubscriptions: number
-      alarmMarkedAt: string | null
-      retryReason: string | null
-    }> = []
 
   for (const transfer of dueTransfers) {
     const userKey = transfer.korisnik?.trim()
@@ -151,11 +111,8 @@ export async function GET(request: Request) {
       const subscriptions =
           subscriptionsForUser.length > 0
               ? subscriptionsForUser
-              : await prisma.pushSubscription.findMany()
-      const matchedBy = subscriptionsForUser.length > 0 ? "userKey" : "fallback-all"
-      let sentForTransfer = 0
-      let failedForTransfer = 0
-      let removedExpiredForTransfer = 0
+          : await prisma.pushSubscription.findMany()
+    let sentForTransfer = 0
 
     const payload = {
       title: "Podsjetnik za transfer",
@@ -181,22 +138,17 @@ export async function GET(request: Request) {
         sentNotifications += 1
           sentForTransfer += 1
       } catch (error) {
-          failedForTransfer += 1
         if (isPushSubscriptionExpired(error)) {
           await prisma.pushSubscription.delete({ where: { endpoint: subscription.endpoint } })
-            removedExpiredForTransfer += 1
         }
       }
     }
 
     let alarmMarkedAt: Date | null = null
-    let retryReason: string | null = null
 
     if (subscriptions.length === 0) {
-      retryReason = "Nema aktivnih push pretplata."
       transfersPendingRetry += 1
     } else if (sentForTransfer === 0) {
-      retryReason = "Svi pokušaji slanja su neuspješni."
       transfersPendingRetry += 1
     } else {
       alarmMarkedAt = new Date()
@@ -208,38 +160,16 @@ export async function GET(request: Request) {
     }
 
     processedTransfers += 1
-      debugLog.push({
-          transferId: transfer.id,
-          korisnik: transfer.korisnik,
-          relacija: relacijaToLabel(transfer.relacija),
-          datum: transfer.datum.toISOString().slice(0, 10),
-          vrijeme: transfer.vrijeme.toISOString().slice(11, 19),
-          matchedBy,
-          subscriptionCount: subscriptions.length,
-          sentNotifications: sentForTransfer,
-          failedNotifications: failedForTransfer,
-          removedExpiredSubscriptions: removedExpiredForTransfer,
-        alarmMarkedAt: alarmMarkedAt?.toISOString() ?? null,
-        retryReason,
-      })
   }
 
   return NextResponse.json({
     ok: true,
-      transferTimeZone,
-      localNow: {
-          date: localNow.date.toISOString().slice(0, 10),
-          time: localNow.time.toISOString().slice(11, 19),
-      },
-    reminderWindow: "1 hour before transfer",
-    reminderWindowStartUtc: windowStart.toISOString(),
-    reminderWindowEndUtc: windowEnd.toISOString(),
-      dueTransfersCount: dueTransfers.length,
+    transferTimeZone,
+    dueTransfersCount: dueTransfers.length,
     processedTransfers,
     transfersMarkedAsSent,
     transfersPendingRetry,
     sentNotifications,
-      debugLog,
   })
 }
 
