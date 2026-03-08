@@ -49,7 +49,6 @@ function relacijaToValue(relacija: "APARTMAN_AERODROM" | "AERODROM_APARTMAN"): s
 
 export default async function TransferEditPage({ params }: TransferEditPageProps) {
   const { id } = await params
-  const today = formatDateInputValue(new Date())
 
   const transfer = await prisma.transfer.findUnique({ where: { id } })
 
@@ -116,7 +115,6 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
             <input
               type="date"
               name="datum"
-              min={today}
               defaultValue={formatDateInputValue(transfer.datum)}
               className="h-10 rounded-md border bg-background px-3 text-sm"
             />
@@ -127,6 +125,7 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
             <div className="flex gap-2">
               <select
                 id="sat"
+                name="sat"
                 defaultValue={defaultHour}
                 className="h-10 rounded-md border bg-background px-3 text-sm flex-1"
               >
@@ -140,6 +139,7 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
               <span className="flex items-center">:</span>
               <select
                 id="minuta"
+                name="minuta"
                 defaultValue={defaultMinute}
                 className="h-10 rounded-md border bg-background px-3 text-sm flex-1"
               >
@@ -150,7 +150,6 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
                   </option>
                 ))}
               </select>
-              <input type="hidden" name="vrijeme" id="vrijeme-hidden" defaultValue={timeValue} />
             </div>
           </div>
         </div>
@@ -195,39 +194,6 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
           Sačuvaj izmjene
         </button>
       </form>
-
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              const form = document.querySelector('form');
-              const satSelect = document.getElementById('sat');
-              const minutaSelect = document.getElementById('minuta');
-              const vrijemeHidden = document.getElementById('vrijeme-hidden');
-
-              function updateVrijeme() {
-                const sat = satSelect.value.padStart(2, '0');
-                const minuta = minutaSelect.value.padStart(2, '0');
-                if (sat && minuta) {
-                  vrijemeHidden.value = sat + ':' + minuta;
-                }
-              }
-
-              satSelect.addEventListener('change', updateVrijeme);
-              minutaSelect.addEventListener('change', updateVrijeme);
-
-              form.addEventListener('submit', function(e) {
-                if (!satSelect.value || !minutaSelect.value) {
-                  e.preventDefault();
-                  alert('Molimo odaberite i sat i minuta');
-                  return false;
-                }
-                updateVrijeme();
-              });
-            })();
-          `,
-        }}
-      />
     </main>
   )
 }

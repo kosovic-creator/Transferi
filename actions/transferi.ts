@@ -103,6 +103,8 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
   const rawRelacija = formData.get("relacija")
   const rawDatum = formData.get("datum")
   const rawVrijeme = formData.get("vrijeme")
+  const rawSat = formData.get("sat")
+  const rawMinuta = formData.get("minuta")
   const alarmEnabled = formData.get("alarmEnabled") === "on"
 
   const current = await prisma.transfer.findUnique({ where: { id } })
@@ -115,9 +117,19 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
     typeof rawDatum === "string" && rawDatum.trim()
       ? parseDateOnly(rawDatum.trim())
       : current.datum
-  const nextVrijeme =
+  const explicitVrijeme =
     typeof rawVrijeme === "string" && rawVrijeme.trim()
-      ? parseTimeOnly(rawVrijeme.trim())
+      ? rawVrijeme.trim()
+      : null
+
+  const sat = typeof rawSat === "string" ? rawSat.trim() : ""
+  const minuta = typeof rawMinuta === "string" ? rawMinuta.trim() : ""
+  const vrijemeFromParts = sat && minuta ? `${sat}:${minuta}` : null
+
+  const nextVrijeme = vrijemeFromParts
+    ? parseTimeOnly(vrijemeFromParts)
+    : explicitVrijeme
+      ? parseTimeOnly(explicitVrijeme)
       : current.vrijeme
 
   const datumVrijemeUtc = combineDateAndTimeUtc(nextDatum, nextVrijeme)
