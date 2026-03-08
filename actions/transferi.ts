@@ -98,6 +98,24 @@ export async function createTransfer(formData: FormData): Promise<TransferRecord
   return transfer
 }
 
+type CreateTransferResult =
+  | { ok: true; transfer: TransferRecord }
+  | { ok: false; error: string }
+
+export async function createTransferSafe(formData: FormData): Promise<CreateTransferResult> {
+  try {
+    const transfer = await createTransfer(formData)
+    return { ok: true, transfer }
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Greška pri čuvanju transfera."
+
+    return { ok: false, error: message }
+  }
+}
+
 export async function updateTransfer(formData: FormData): Promise<TransferRecord> {
   const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
   const id = getRequiredString(formData, "id")

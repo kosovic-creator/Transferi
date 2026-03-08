@@ -6,7 +6,7 @@ import { format } from "date-fns"
 import { useFormStatus } from "react-dom"
 import { toast } from "sonner"
 
-import { createTransfer } from "@/actions/transferi"
+import { createTransferSafe } from "@/actions/transferi"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -124,24 +124,23 @@ export default function DodajTransferPage() {
 				className="space-y-5 rounded-xl border bg-card p-4 sm:p-6"
 				action={async (formData) => {
 					setError(null)
+					const result = await createTransferSafe(formData)
 
-					try {
-						await createTransfer(formData)
-						toast.success("Transfer je uspjesno dodat.")
-						setRelacija("")
-						setDatum(undefined)
-						setSat("")
-						setMinuta("")
-						setKorisnik("")
-						setTimeout(() => {
-                            router.push("/")
-						}, 800)
-					} catch (e) {
-						const message =
-							e instanceof Error ? e.message : "Greška pri čuvanju transfera."
-						setError(message)
-						toast.error(message)
+					if (!result.ok) {
+						setError(result.error)
+						toast.error(result.error)
+						return
 					}
+
+					toast.success("Transfer je uspjesno dodat.")
+					setRelacija("")
+					setDatum(undefined)
+					setSat("")
+					setMinuta("")
+					setKorisnik("")
+					setTimeout(() => {
+						router.push("/")
+					}, 800)
 				}}
 			>
 				<input type="hidden" name="relacija" value={relacija} required />
