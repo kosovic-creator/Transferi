@@ -59,21 +59,85 @@ export function parseTimeOnly(value: Date | string): Date {
   return time
 }
 
-export function combineDateAndTimeUtc(datum: Date, vrijeme: Date): Date {
+function getZonedParts(date: Date, timeZone: string): {
+  year: number
+  month: number
+  day: number
+  hour: number
+  minute: number
+  second: number
+} {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  })
+
+  const parts = formatter.formatToParts(date)
+  const part = (type: Intl.DateTimeFormatPartTypes): number => {
+    const value = parts.find((p) => p.type === type)?.value
+    return Number(value ?? "0")
+  }
+
+  return {
+    year: part("year"),
+    month: part("month"),
+    day: part("day"),
+    hour: part("hour"),
+    minute: part("minute"),
+    second: part("second"),
+  }
+}
+
+export function combineDateAndTimeUtc(
+  datum: Date,
+  vrijeme: Date,
+  timeZone = "UTC"
+): Date {
   if (Number.isNaN(datum.getTime()) || Number.isNaN(vrijeme.getTime())) {
     throw new Error("Neispravan datum ili vrijeme.")
   }
 
-  return new Date(
-    Date.UTC(
-      datum.getUTCFullYear(),
-      datum.getUTCMonth(),
-      datum.getUTCDate(),
-      vrijeme.getUTCHours(),
-      vrijeme.getUTCMinutes(),
-      vrijeme.getUTCSeconds()
+  const year = datum.getUTCFullYear()
+  const month = datum.getUTCMonth() + 1
+  const day = datum.getUTCDate()
+  const hour = vrijeme.getUTCHours()
+  const minute = vrijeme.getUTCMinutes()
+  const second = vrijeme.getUTCSeconds()
+
+  if (timeZone === "UTC") {
+    return new Date(Date.UTC(year, month - 1, day, hour, minute, second))
+  }
+
+  // Convert local wall-clock date/time in given timezone to a UTC instant.
+  const targetAsUtc = Date.UTC(year, month - 1, day, hour, minute, second)
+  let utcGuess = targetAsUtc
+
+  for (let i = 0; i < 4; i += 1) {
+    const zoned = getZonedParts(new Date(utcGuess), timeZone)
+    const zonedAsUtc = Date.UTC(
+      zoned.year,
+      zoned.month - 1,
+      zoned.day,
+      zoned.hour,
+      zoned.minute,
+      zoned.second
     )
-  )
+    const delta = targetAsUtc - zonedAsUtc
+
+    if (delta === 0) {
+      break
+    }
+
+    utcGuess += delta
+  }
+
+  return new Date(utcGuess)
 }
 
 export function parseRelacija(rawValue: string): RelacijaValue {

@@ -23,34 +23,24 @@ export async function POST(request: Request) {
   const body = (await request.json()) as SendNowRequest
   const userKey = body.userKey?.trim()
 
-  if (!userKey) {
-    return NextResponse.json(
-      { error: "Unesi korisnika da bi odmah poslao push obavještenje." },
-      { status: 400 }
-    )
-  }
-
-  const subscriptionsForUser = await prisma.pushSubscription.findMany({
-    where: {
-      userKey: {
-        equals: userKey,
-        mode: "insensitive",
+  const subscriptions = userKey
+    ? await prisma.pushSubscription.findMany({
+      where: {
+        userKey: {
+          equals: userKey,
+          mode: "insensitive",
+        },
       },
-    },
-  })
-
-  if (subscriptionsForUser.length === 0) {
-    return NextResponse.json(
-      { error: "Nema aktivnih push pretplata za ovog korisnika." },
-      { status: 404 }
-    )
-  }
-
-  const subscriptions = subscriptionsForUser
+    })
+    : await prisma.pushSubscription.findMany()
 
   if (subscriptions.length === 0) {
     return NextResponse.json(
-      { error: "Nema aktivnih push pretplata za slanje notifikacije." },
+      {
+        error: userKey
+          ? "Nema aktivnih push pretplata za ovog korisnika."
+          : "Nema aktivnih push pretplata za slanje notifikacije.",
+      },
       { status: 404 }
     )
   }
@@ -97,6 +87,6 @@ export async function POST(request: Request) {
     failedCount,
     removedExpiredCount,
     matchedSubscriptions: subscriptions.length,
-    matchedBy: "userKey",
+    matchedBy: userKey ? "userKey" : "fallback-all",
   })
 }

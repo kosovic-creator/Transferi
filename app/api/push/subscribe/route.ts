@@ -15,14 +15,10 @@ type SubscribeRequest = {
 
 export async function POST(request: Request) {
   const body = (await request.json()) as SubscribeRequest
-  const userKey = body.userKey?.trim()
+  const userKey = body.userKey?.trim() || "global"
   const endpoint = body.subscription?.endpoint
   const p256dhKey = body.subscription?.keys?.p256dh
   const authKey = body.subscription?.keys?.auth
-
-  if (!userKey) {
-    return NextResponse.json({ error: "Polje userKey je obavezno." }, { status: 400 })
-  }
 
   if (!endpoint || !p256dhKey || !authKey) {
     return NextResponse.json({ error: "Neispravna push subscription vrijednost." }, { status: 400 })

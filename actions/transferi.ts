@@ -69,10 +69,11 @@ export async function getTransferById(
 }
 
 export async function createTransfer(formData: FormData): Promise<TransferRecord> {
+  const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
   const relacija = parseRelacija(getRequiredString(formData, "relacija"))
   const datum = parseDateOnly(getRequiredString(formData, "datum"))
   const vrijeme = parseTimeOnly(getRequiredString(formData, "vrijeme"))
-  const datumVrijemeUtc = combineDateAndTimeUtc(datum, vrijeme)
+  const datumVrijemeUtc = combineDateAndTimeUtc(datum, vrijeme, transferTimeZone)
   const alarmEnabled = formData.get("alarmEnabled") === "on"
 
   await assertNoTransferOverlap(datum, vrijeme)
@@ -98,6 +99,7 @@ export async function createTransfer(formData: FormData): Promise<TransferRecord
 }
 
 export async function updateTransfer(formData: FormData): Promise<TransferRecord> {
+  const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
   const id = getRequiredString(formData, "id")
 
   const rawRelacija = formData.get("relacija")
@@ -132,7 +134,7 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
       ? parseTimeOnly(explicitVrijeme)
       : current.vrijeme
 
-  const datumVrijemeUtc = combineDateAndTimeUtc(nextDatum, nextVrijeme)
+  const datumVrijemeUtc = combineDateAndTimeUtc(nextDatum, nextVrijeme, transferTimeZone)
 
   await assertNoTransferOverlap(nextDatum, nextVrijeme, id)
 

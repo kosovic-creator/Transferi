@@ -29,11 +29,6 @@ export function PushReminderSetup() {
 
       const trimmedUserKey = userKey.trim()
 
-      if (!trimmedUserKey) {
-        setStatus("Unesi korisnika prije uključivanja podsetnika.")
-        return
-      }
-
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         setStatus("Ovaj browser ne podržava push notifikacije.")
         return
@@ -116,7 +111,7 @@ export function PushReminderSetup() {
     <section className="rounded-xl border bg-card p-4 shadow-sm">
       <h2 className="text-base font-semibold">Alarm na telefonu</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Unesi korisnika i uključi podsjetnike da stignu kada dođe vrijeme transfera.
+        Uključi podsjetnike za ovaj telefon. Korisnik je opcion (za ciljanje po imenu).
       </p>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
@@ -125,8 +120,8 @@ export function PushReminderSetup() {
           <Input
             value={userKey}
             onChange={(event) => setUserKey(event.target.value)}
-            placeholder="Isto ime kao u transferu"
-          
+            placeholder="Opcionalno: isto ime kao u transferu"
+
           />
         </label>
 

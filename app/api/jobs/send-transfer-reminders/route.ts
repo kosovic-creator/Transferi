@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
 import { sendWebPush } from "@/lib/web-push"
+import { combineDateAndTimeUtc } from "@/actions/transfer-utils"
 
 export const dynamic = "force-dynamic"
 
@@ -72,20 +73,48 @@ export async function GET(request: Request) {
     const transferTimeZone = process.env.TRANSFER_TIMEZONE ?? "Europe/Podgorica"
     const localNow = getLocalNowDateAndTime(transferTimeZone)
 
-  // Dodaj 1 sat (60 minuta) na trenutno vrijeme za provjeru
-  const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000)
+  // Salji podsjetnik u prozoru oko 60 minuta prije transfera.
+  const now = new Date()
+  const reminderLeadMs = 60 * 60 * 1000
+  const toleranceMs = 5 * 60 * 1000
+  const windowStart = new Date(now.getTime() + reminderLeadMs - toleranceMs)
+  const windowEnd = new Date(now.getTime() + reminderLeadMs + toleranceMs)
 
-  const dueTransfers = await prisma.transfer.findMany({
+  const candidates = await prisma.transfer.findMany({
     where: {
       alarmEnabled: true,
       alarmSentAt: null,
-      datumVrijemeUtc: {
-        lte: oneHourFromNow,
-      },
     },
-    orderBy: [{ datumVrijemeUtc: "asc" }, { id: "asc" }],
-    take: 100,
+    orderBy: [{ datum: "asc" }, { vrijeme: "asc" }, { id: "asc" }],
+    take: 500,
   })
+
+  const dueTransfers: typeof candidates = []
+
+  for (const transfer of candidates) {
+    const correctedDatumVrijemeUtc = combineDateAndTimeUtc(
+      transfer.datum,
+      transfer.vrijeme,
+      transferTimeZone
+    )
+
+    if (transfer.datumVrijemeUtc.getTime() !== correctedDatumVrijemeUtc.getTime()) {
+      await prisma.transfer.update({
+        where: { id: transfer.id },
+        data: { datumVrijemeUtc: correctedDatumVrijemeUtc },
+      })
+    }
+
+    if (
+      correctedDatumVrijemeUtc.getTime() >= windowStart.getTime() &&
+      correctedDatumVrijemeUtc.getTime() <= windowEnd.getTime()
+    ) {
+      dueTransfers.push({
+        ...transfer,
+        datumVrijemeUtc: correctedDatumVrijemeUtc,
+      })
+    }
+  }
 
   let sentNotifications = 0
   let processedTransfers = 0
@@ -186,6 +215,8 @@ export async function GET(request: Request) {
           time: localNow.time.toISOString().slice(11, 19),
       },
     reminderWindow: "1 hour before transfer",
+    reminderWindowStartUtc: windowStart.toISOString(),
+    reminderWindowEndUtc: windowEnd.toISOString(),
       dueTransfersCount: dueTransfers.length,
     processedTransfers,
     sentNotifications,
