@@ -9,7 +9,9 @@
     "lint": "eslint",
     "generate-vapid": "node scripts/generate-vapid-keys.js",
     "push:cleanup:dry": "tsx scripts/cleanup-non-admin-push-subscriptions.ts",
-    "push:cleanup:apply": "tsx scripts/cleanup-non-admin-push-subscriptions.ts --apply"
+    "push:cleanup:apply": "tsx scripts/cleanup-non-admin-push-subscriptions.ts --apply",
+    "push:admin:dedupe:dry": "tsx scripts/keep-single-admin-push-subscription.ts",
+    "push:admin:dedupe:apply": "tsx scripts/keep-single-admin-push-subscription.ts --apply"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
