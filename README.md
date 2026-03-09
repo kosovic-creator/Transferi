@@ -51,6 +51,24 @@ Aplikacija podržava mobilne push podsjetnike koji šalju notifikaciju u vrijeme
 
 **Detaljno objašnjenje setup-a:** [SETUP_ALARMI.md](./SETUP_ALARMI.md)
 
+### Admin-only podešavanje push pretplate
+
+Push setup vise nije na javnoj pocetnoj strani. Dostupan je samo na:
+
+`/admin/push?key=...`
+
+Dodaj u `.env`:
+
+```bash
+ADMIN_PUSH_SETUP_KEY=drasko
+```
+
+Zatim otvori:
+
+`/admin/push?key=tvoj_kljuc`
+
+Napomena: samo admin treba da ukljuci push na ovoj stranici.
+
 ## Online chat podrska (Crisp)
 
 Aplikacija podrzava online chat widget za komunikaciju sa potencijalnim korisnicima.
