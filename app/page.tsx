@@ -93,8 +93,11 @@ export default async function Home({ searchParams }: HomePageProps) {
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-base font-semibold">{relacijaToValue(transfer.relacija)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDateDisplay(transfer.datum)} u {formatTimeDisplay(transfer.vrijeme)}
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Datum: <span className="text-foreground">{formatDateDisplay(transfer.datum)}</span>
+                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Vrijeme: <span className="text-foreground">{formatTimeDisplay(transfer.vrijeme)}</span>
                   </p>
                 </div>
                 <p className="text-sm font-medium">{transfer.iznos.toFixed(2)} EUR</p>
