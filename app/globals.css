@@ -48,24 +48,24 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --background: oklch(0.955 0.014 78.5);
+  --foreground: oklch(0.255 0.018 70.2);
+  --card: oklch(0.982 0.008 78.8);
+  --card-foreground: oklch(0.255 0.018 70.2);
+  --popover: oklch(0.982 0.008 78.8);
+  --popover-foreground: oklch(0.255 0.018 70.2);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.94 0.01 78.7);
+  --secondary-foreground: oklch(0.255 0.018 70.2);
+  --muted: oklch(0.93 0.01 78.7);
+  --muted-foreground: oklch(0.47 0.012 71.9);
+  --accent: oklch(0.93 0.01 78.7);
+  --accent-foreground: oklch(0.255 0.018 70.2);
   --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.86 0.012 77.3);
+  --input: oklch(0.86 0.012 77.3);
+  --ring: oklch(0.66 0.022 72.6);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
@@ -121,9 +121,42 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background:
+      radial-gradient(1200px 700px at 8% -10%, rgb(255 255 255 / 0.65), transparent 60%),
+      radial-gradient(900px 500px at 92% 10%, rgb(186 160 125 / 0.18), transparent 65%),
+      repeating-linear-gradient(
+        115deg,
+        transparent 0 16px,
+        rgb(53 43 31 / 0.08) 16px 17px,
+        transparent 17px 33px
+      ),
+      linear-gradient(180deg, rgb(244 239 230), rgb(239 231 220));
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
   }
+}
+
+.glass-shell {
+  transition:
+    background-color 260ms ease,
+    box-shadow 260ms ease,
+    backdrop-filter 260ms ease,
+    border-color 260ms ease;
+}
+
+html.scrolled-shell .glass-shell {
+  border-color: rgb(255 255 255 / 0.5);
+  background-color: rgb(255 251 244 / 0.78);
+  backdrop-filter: blur(20px);
+}
+
+html.scrolled-shell .glass-shell-top {
+  box-shadow: 0 12px 32px rgb(79 58 33 / 0.12);
+}
+
+html.scrolled-shell .glass-shell-bottom {
+  box-shadow: 0 -10px 30px rgb(79 58 33 / 0.12);
 }
