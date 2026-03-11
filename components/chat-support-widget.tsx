@@ -144,6 +144,7 @@ export function ChatSupportWidget() {
       hasInitializedCrisp.current = true
 
       pushCrisp(["config", "locale:code", ["sr"]])
+      pushCrisp(["config", "color:primary", ["#000000"]])
       pushCrisp(["set", "session:data", [[["Operater", operatorName]]]])
       pushCrisp([
         "on",
