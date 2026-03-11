@@ -144,7 +144,8 @@ export function ChatSupportWidget() {
       hasInitializedCrisp.current = true
 
       pushCrisp(["config", "locale:code", ["sr"]])
-      pushCrisp(["config", "color:primary", ["#000000"]])
+      // Postavlja boju widgeta na crnu
+      pushCrisp(["config", "color:theme", ["black"]])
       pushCrisp(["set", "session:data", [[["Operater", operatorName]]]])
       pushCrisp([
         "on",
