@@ -13,7 +13,11 @@ export function SiteFooter() {
       return
     }
 
-    await promptInstall()
+    const result = await promptInstall()
+
+    if (result === "unavailable") {
+      toast("Chrome > meni sa tri tačke > Install Transferi ili Install page as app")
+    }
   }
 
   return (
@@ -21,13 +25,13 @@ export function SiteFooter() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:text-sm">
         <div className="flex items-center gap-3">
           <p>Transferi aplikacija</p>
-          {!installed && (canInstall || ios) ? (
+          {!installed ? (
             <button
               type="button"
               onClick={handleInstallClick}
               className="rounded-full border border-[rgb(62_45_30/0.12)] px-3 py-1 text-[11px] font-medium text-[rgb(62_45_30)] transition hover:bg-[rgb(62_45_30/0.06)] sm:text-xs"
             >
-              {ios ? "Kako instalirati" : "Instaliraj aplikaciju"}
+              {ios ? "Kako instalirati" : canInstall ? "Instaliraj aplikaciju" : "Kako instalirati"}
             </button>
           ) : null}
         </div>
