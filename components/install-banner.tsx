@@ -1,10 +1,23 @@
 "use client"
 
+import { useEffect } from "react"
 import { usePwaInstall } from "@/components/use-pwa-install"
 
 export function InstallBanner() {
   const { canInstall, dismissInstall, ios, promptInstall, shouldShowBanner } =
     usePwaInstall()
+
+    useEffect(() => {
+        if (!shouldShowBanner) return
+
+        const timeoutId = window.setTimeout(() => {
+            dismissInstall()
+        }, 7000)
+
+        return () => {
+            window.clearTimeout(timeoutId)
+        }
+    }, [dismissInstall, shouldShowBanner])
 
   if (!shouldShowBanner) return null
 
