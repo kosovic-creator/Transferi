@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import {
+  getDeferredPrompt,
+  setDeferredPrompt,
+  subscribeDeferredPrompt,
+} from "@/components/register-pwa"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -24,7 +29,9 @@ function isStandaloneDisplayMode(): boolean {
 }
 
 export function InstallAppButton() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [deferredPrompt, setLocalPrompt] = useState<BeforeInstallPromptEvent | null>(
+    () => getDeferredPrompt()
+  )
   const [isInstalled, setIsInstalled] = useState(false)
 
   const ios = useMemo(() => isIosDevice(), [])
@@ -32,10 +39,12 @@ export function InstallAppButton() {
   useEffect(() => {
     setIsInstalled(isStandaloneDisplayMode())
 
-    function handleBeforeInstallPrompt(event: Event) {
-      event.preventDefault()
-      setDeferredPrompt(event as BeforeInstallPromptEvent)
-    }
+    // Sync with the module-level prompt (in case event fired before this component mounted)
+    setLocalPrompt(getDeferredPrompt())
+
+    const unsub = subscribeDeferredPrompt((e) => {
+      setLocalPrompt(e as BeforeInstallPromptEvent | null)
+    })
 
     function handleAppInstalled() {
       setIsInstalled(true)
@@ -43,11 +52,10 @@ export function InstallAppButton() {
       toast.success("Aplikacija je instalirana")
     }
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+      unsub()
       window.removeEventListener("appinstalled", handleAppInstalled)
     }
   }, [])
@@ -62,6 +70,7 @@ export function InstallAppButton() {
       }
 
       setDeferredPrompt(null)
+      setLocalPrompt(null)
       return
     }
 
