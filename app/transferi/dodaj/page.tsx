@@ -1,6 +1,36 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { setLocaleCookie, deleteExtraLocaleCookies } from "@/lib/locale-cookie-utils"
+function LanguageSwitcher({ current, onChange }: { current: string, onChange: (lang: string) => void }) {
+	// Emoji zastave: 🇲🇪 (Montenegro), 🇬🇧 (UK)
+	// Prikazujemo samo zastavu za neaktivni jezik
+	return (
+		<div className="mb-4 flex gap-2 items-center">
+			{current !== "sr" && (
+				<button
+					className="text-2xl cursor-pointer bg-transparent border-none p-0"
+					onClick={() => onChange("sr")}
+					title="Montenegrin"
+					type="button"
+				>
+					<span role="img" aria-label="Montenegrin">🇲🇪</span>
+				</button>
+			)}
+			{current !== "en" && (
+				<button
+					className="text-2xl cursor-pointer bg-transparent border-none p-0"
+					onClick={() => onChange("en")}
+					title="English"
+					type="button"
+				>
+					<span role="img" aria-label="English">🇬🇧</span>
+				</button>
+			)}
+		</div>
+	)
+}
+import { getLocale, translations } from "@/lib/transferi-i18n"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { useFormStatus } from "react-dom"
@@ -26,12 +56,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: typeof translations["sr"] }) {
 	const { pending } = useFormStatus()
-
 	return (
 		<Button type="submit" disabled={pending} className="w-full sm:w-auto">
-			{pending ? "Spremam..." : "Sačuvaj transfer"}
+			{pending ? t.spremam : t.sacuvajTransfer}
 		</Button>
 	)
 }
@@ -52,11 +81,27 @@ export default function DodajTransferPage() {
 		return now
 	}, [])
 
+	// Lokalizacija (App Router friendly)
+	const [locale, setLocale] = useState("sr")
+	useEffect(() => {
+		const match = document.cookie.match(/(?:^|; )locale=([^;]*)/)
+		if (match && match[1]) {
+			setLocale(match[1].split("-")[0])
+		}
+	}, [])
+
+	function handleLanguageChange(lang: string) {
+		setLocaleCookie(lang)
+		deleteExtraLocaleCookies()
+		setLocale(lang)
+		// Nema reload, sve se ažurira preko state-a
+	}
+	const t = translations[locale] || translations.sr
+
 	const datumString = useMemo(() => {
 		if (!datum) {
 			return ""
 		}
-
 		return format(datum, "yyyy-MM-dd")
 	}, [datum])
 
@@ -77,10 +122,11 @@ export default function DodajTransferPage() {
 
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-10">
+			<LanguageSwitcher current={locale} onChange={handleLanguageChange} />
 			<div className="mb-8 space-y-2">
-				<h1 className="text-2xl font-semibold">Novi transfer</h1>
+				<h1 className="text-2xl font-semibold">{t.noviTransfer}</h1>
 				<p className="text-sm text-muted-foreground">
-					Unesi relaciju, datum, vrijeme i ostale detalje transfera.
+					{t.unesiDetalje}
 				</p>
 			</div>
 
@@ -126,17 +172,17 @@ export default function DodajTransferPage() {
 				<input type="hidden" name="vrijeme" value={vrijemeString} required />
 
 				<div className="space-y-2">
-					<label className="text-sm font-medium">Relacija</label>
+					<label className="text-sm font-medium">{t.relacija}</label>
 					<Select value={relacija} onValueChange={(value) => setRelacija(value ?? "")}>
 						<SelectTrigger className="w-full">
-							<SelectValue placeholder="Izaberi relaciju" />
+							<SelectValue placeholder={t.izaberiRelaciju} />
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="apartman-aerodrom">
-								apartman-aerodrom
+								{t.apartmanAerodrom}
 							</SelectItem>
 							<SelectItem value="aerodrom-apartman">
-								aerodrom-apartman
+								{t.aerodromApartman}
 							</SelectItem>
 						</SelectContent>
 					</Select>
@@ -144,32 +190,32 @@ export default function DodajTransferPage() {
 
 				{!isApartmanAerodrom ? (
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Broj leta ili odakle dolazi *</label>
+						<label className="text-sm font-medium">{t.brojLetaNapomena}</label>
 						<Input
 							name="brojLetaNapomena"
-							placeholder="Npr. broj leta ili odakle dolazi"
+							placeholder={t.brojLetaNapomenaPlaceholder}
 							required
 						/>
 					</div>
 				) : null}
 
 				<div className="space-y-2">
-					<label className="text-sm font-medium">Datum</label>
+					<label className="text-sm font-medium">{t.datum}</label>
 					<Input
 						value={datum ? format(datum, "dd.MM.yyyy") : ""}
 						readOnly
-						placeholder="Izaberi datum"
+						placeholder={t.izaberiDatum}
 						onClick={() => setIsCalendarOpen(true)}
 						className="cursor-pointer"
 					/>
 				</div>
 
 				<div className="space-y-2">
-					<label className="text-sm font-medium">Vrijeme</label>
+					<label className="text-sm font-medium">{t.vrijeme}</label>
 					<div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
 						<Select value={sat} onValueChange={(value) => setSat(value ?? "")}>
 							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Sat" />
+								<SelectValue placeholder={t.sat} />
 							</SelectTrigger>
 							<SelectContent>
 								{sati.map((h) => (
@@ -182,7 +228,7 @@ export default function DodajTransferPage() {
 						<span className="hidden items-center justify-center text-lg sm:flex">:</span>
 						<Select value={minuta} onValueChange={(value) => setMinuta(value ?? "")}>
 							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Minuta" />
+								<SelectValue placeholder={t.minuta} />
 							</SelectTrigger>
 							<SelectContent>
 								{minute.map((m) => (
@@ -196,16 +242,16 @@ export default function DodajTransferPage() {
 				</div>
 
 				<div className="space-y-2">
-					<label className="text-sm font-medium">Iznos</label>
+					<label className="text-sm font-medium">{t.iznos}</label>
 					<Input name="iznos" type="number" min="0" step="0.01" defaultValue="20" />
 				</div>
 
 				{!isApartmanAerodrom ? (
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Korisnik *</label>
+						<label className="text-sm font-medium">{t.korisnik}</label>
 						<Input
 							name="korisnik"
-							placeholder="Ime korisnika"
+							placeholder={t.korisnikPlaceholder}
 							value={korisnik}
 							onChange={(event) => setKorisnik(event.target.value)}
 							required
@@ -215,22 +261,22 @@ export default function DodajTransferPage() {
 
 				{!isApartmanAerodrom ? (
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Telefon korisnika (opciono)</label>
-						<Input name="brojTelefona" placeholder="npr. +38269111222" />
+						<label className="text-sm font-medium">{t.telefonKorisnika}</label>
+						<Input name="brojTelefona" placeholder={t.telefonKorisnikaPlaceholder} />
 					</div>
 				) : null}
 
 				{error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-				<SubmitButton />
+				<SubmitButton t={t} />
 			</form>
 
 			<Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Izaberi datum transfera</DialogTitle>
+						<DialogTitle>{t.izaberiDatumTransfera}</DialogTitle>
 						<DialogDescription>
-							Odabrani datum će biti sačuvan u polje datum.
+							{t.odabraniDatumOpis}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -249,7 +295,7 @@ export default function DodajTransferPage() {
 
 					<DialogFooter>
 						<Button type="button" variant="outline" onClick={() => setIsCalendarOpen(false)}>
-							Zatvori
+							{t.zatvori}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
