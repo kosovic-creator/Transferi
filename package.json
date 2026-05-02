@@ -2,6 +2,7 @@
   "name": "transferi",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "dev": "next dev --webpack --port 3001",
     "build": "next build --webpack",
@@ -30,10 +31,13 @@
     "twilio": "^5.12.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "babel-loader": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^7.4.2",
