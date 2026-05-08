@@ -179,6 +179,29 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
       : current.vrijeme
 
   const datumVrijemeUtc = combineDateAndTimeUtc(nextDatum, nextVrijeme, transferTimeZone)
+  const nextRelacija =
+    typeof rawRelacija === "string" && rawRelacija.trim()
+      ? parseRelacija(rawRelacija.trim())
+      : current.relacija
+  const isApartmanAerodrom = nextRelacija === "APARTMAN_AERODROM"
+
+  const brojLetaNapomena = isApartmanAerodrom
+    ? null
+    : formData.has("brojLetaNapomena")
+      ? getRequiredString(formData, "brojLetaNapomena")
+      : undefined
+
+  const korisnik = isApartmanAerodrom
+    ? null
+    : formData.has("korisnik")
+      ? getRequiredString(formData, "korisnik")
+      : undefined
+
+  const brojTelefona = isApartmanAerodrom
+    ? null
+    : formData.has("brojTelefona")
+      ? getOptionalString(formData, "brojTelefona")
+      : undefined
 
   await assertNoTransferOverlap(nextDatum, nextVrijeme, id)
 
@@ -189,25 +212,16 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
   const transfer = await prisma.transfer.update({
     where: { id },
     data: {
-      relacija:
-        typeof rawRelacija === "string" && rawRelacija.trim()
-          ? parseRelacija(rawRelacija.trim())
-          : undefined,
-      brojLetaNapomena: formData.has("brojLetaNapomena")
-        ? getRequiredString(formData, "brojLetaNapomena")
-        : undefined,
+      relacija: nextRelacija,
+      brojLetaNapomena,
       iznos: getOptionalNumber(formData, "iznos"),
       datum: nextDatum,
       vrijeme: nextVrijeme,
       datumVrijemeUtc,
       alarmEnabled,
       alarmSentAt: shouldResetAlarmSentAt ? null : undefined,
-      korisnik: formData.has("korisnik")
-        ? getRequiredString(formData, "korisnik")
-        : undefined,
-      brojTelefona: formData.has("brojTelefona")
-        ? getOptionalString(formData, "brojTelefona")
-        : undefined,
+      korisnik,
+      brojTelefona,
     },
   })
 
