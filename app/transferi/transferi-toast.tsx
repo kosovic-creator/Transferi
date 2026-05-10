@@ -23,8 +23,12 @@ export function TransferiToast({ type }: TransferiToastProps) {
       toast.success("Transfer je uspjesno izmijenjen.")
     }
 
+    if (type === "executed") {
+      toast.success("Transfer je označen kao izvršen i premješten u arhivu.")
+    }
+
     if (type === "deleted") {
-      toast.success("Transfer je uspjesno obrisan.")
+      toast.success("Transfer je trajno obrisan.")
     }
 
     if (type === "restored") {
@@ -39,8 +43,12 @@ export function TransferiToast({ type }: TransferiToastProps) {
       toast.error("Neuspjesna izmjena transfera.")
     }
 
+    if (type === "execute-error") {
+      toast.error("Neuspjelo izvršavanje transfera.")
+    }
+
     if (type === "delete-error") {
-      toast.error("Neuspjesno brisanje transfera.")
+      toast.error("Neuspjesno trajno brisanje transfera.")
     }
 
     if (type === "restore-error") {

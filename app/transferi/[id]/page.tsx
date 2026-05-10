@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
-import { updateTransfer } from "@/actions/transferi"
+import { updateTransferSafe } from "@/actions/transferi"
 import { prisma } from "@/lib/prisma"
 import EditTransferForm from "@/components/edit-transfer-form"
 
@@ -65,9 +65,9 @@ export default async function TransferEditPage({ params }: TransferEditPageProps
   async function handleUpdate(formData: FormData) {
     "use server"
 
-    try {
-      await updateTransfer(formData)
-    } catch {
+    const result = await updateTransferSafe(formData)
+
+    if (!result.ok) {
       redirect("/?toast=update-error")
     }
 

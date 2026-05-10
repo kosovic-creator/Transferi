@@ -13,7 +13,12 @@ import {
   parseRelacija,
   parseTimeOnly,
 } from "@/actions/transfer-utils"
-import { sendTransferReceivedSms, type SmsSendResult } from "@/lib/twilio-sms"
+import {
+  sendTransferDeletedSms,
+  sendTransferReceivedSms,
+  sendTransferUpdatedSms,
+  type SmsSendResult,
+} from "@/lib/twilio-sms"
 
 function addMinutesToTime(time: Date, minutes: number): Date {
   return new Date(time.getTime() + minutes * 60 * 1000)
@@ -232,7 +237,34 @@ export async function updateTransfer(formData: FormData): Promise<TransferRecord
   return transfer
 }
 
-export async function deleteTransfer(formData: FormData): Promise<TransferRecord> {
+type UpdateTransferResult =
+  | { ok: true; transfer: TransferRecord; sms: SmsSendResult }
+  | { ok: false; error: string }
+
+export async function updateTransferSafe(formData: FormData): Promise<UpdateTransferResult> {
+  try {
+    const transfer = await updateTransfer(formData)
+    const sms = await sendTransferUpdatedSms({
+      transferId: transfer.id,
+      relacija: transfer.relacija,
+      datum: transfer.datum,
+      vrijeme: transfer.vrijeme,
+      korisnik: transfer.korisnik ?? "-",
+      brojLetaNapomena: transfer.brojLetaNapomena ?? "-",
+    })
+
+    return { ok: true, transfer, sms }
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Greška pri izmjeni transfera."
+
+    return { ok: false, error: message }
+  }
+}
+
+export async function completeTransfer(formData: FormData): Promise<TransferRecord> {
   const id = getRequiredString(formData, "id")
 
   const transfer = await prisma.$transaction(async (tx: { transfer: { delete: (arg0: { where: { id: string } }) => any }; arhivaTransfera: { create: (arg0: { data: { id: any; relacija: any; brojLetaNapomena: any; iznos: any; datum: any; vrijeme: any; datumVrijemeUtc: any; alarmEnabled: any; alarmSentAt: any; korisnik: any; brojTelefona: any } }) => any } }) => {
@@ -262,4 +294,50 @@ export async function deleteTransfer(formData: FormData): Promise<TransferRecord
   revalidatePath("/transferi/arhiva")
 
   return transfer
+}
+
+type DeleteTransferPermanentlyResult =
+  | { ok: true; transfer: TransferRecord; sms: SmsSendResult }
+  | { ok: false; error: string }
+
+export async function deleteTransferPermanently(
+  formData: FormData
+): Promise<TransferRecord> {
+  const id = getRequiredString(formData, "id")
+
+  const transfer = await prisma.transfer.delete({ where: { id } })
+
+  // Ako isti ID postoji u arhivi zbog ranijih akcija, ukloni ga da brisanje ostane trajno.
+  await prisma.arhivaTransfera.deleteMany({ where: { id } })
+
+  revalidatePath("/transferi")
+  revalidatePath("/")
+  revalidatePath("/transferi/arhiva")
+
+  return transfer
+}
+
+export async function deleteTransferPermanentlySafe(
+  formData: FormData
+): Promise<DeleteTransferPermanentlyResult> {
+  try {
+    const transfer = await deleteTransferPermanently(formData)
+    const sms = await sendTransferDeletedSms({
+      transferId: transfer.id,
+      relacija: transfer.relacija,
+      datum: transfer.datum,
+      vrijeme: transfer.vrijeme,
+      korisnik: transfer.korisnik ?? "-",
+      brojLetaNapomena: transfer.brojLetaNapomena ?? "-",
+    })
+
+    return { ok: true, transfer, sms }
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Greška pri trajnom brisanju transfera."
+
+    return { ok: false, error: message }
+  }
 }

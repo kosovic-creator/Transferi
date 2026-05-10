@@ -24,7 +24,7 @@ function DeleteSubmitButton() {
       disabled={pending}
       className="h-9"
     >
-      {pending ? "Brisanje..." : "Potvrdi brisanje"}
+      {pending ? "Brisanje..." : "Potvrdi trajno brisanje"}
     </Button>
   )
 }
@@ -47,13 +47,13 @@ export function DeleteTransferDialog({
   return (
     <Dialog>
       <DialogTrigger render={<Button variant="destructive" className="h-9" />}>
-        Obriši
+        Obriši trajno
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Potvrda brisanja</DialogTitle>
+          <DialogTitle>Potvrda trajnog brisanja</DialogTitle>
           <DialogDescription>
-            Da li si siguran da želiš obrisati transfer {relacija} ({datum} u {vrijeme})?
+            Da li si siguran da želiš trajno obrisati transfer {relacija} ({datum} u {vrijeme})?
             Ova akcija je nepovratna.
           </DialogDescription>
         </DialogHeader>

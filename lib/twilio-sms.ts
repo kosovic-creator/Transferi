@@ -158,3 +158,169 @@ export async function sendTransferReceivedSms(
     }
   }
 }
+
+export async function sendTransferUpdatedSms(
+  input: SendTransferReceivedSmsInput
+): Promise<SmsSendResult> {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+  const from = process.env.TWILIO_FROM_NUMBER
+
+  if (!accountSid || !authToken || !from) {
+    return {
+      status: "skipped",
+      reason: "Twilio varijable nisu kompletno podešene.",
+    }
+  }
+
+  const to = normalizePhoneNumber(DRIVER_SMS_NUMBER)
+
+  if (!to.startsWith("+")) {
+    return {
+      status: "failed",
+      error: "Broj telefona mora biti u međunarodnom formatu (npr. +382...).",
+    }
+  }
+
+  const client = twilio(accountSid, authToken)
+  const korisnikShort = compactText(input.korisnik, 22)
+  const letShort = compactText(input.brojLetaNapomena, 18)
+  const relacijaShort = relacijaToValue(input.relacija)
+    .replace("apartman-aerodrom", "A->AP")
+    .replace("aerodrom-apartman", "AP->A")
+
+  const body = `IZMJENA: ${formatDateDisplay(input.datum)} ${formatTimeDisplay(input.vrijeme)} | ${relacijaShort} | Kor:${korisnikShort} | Let:${letShort}`
+
+  try {
+    const message = await client.messages.create({
+      to,
+      from,
+      body,
+    })
+
+    let latestStatus = String(message.status ?? "unknown")
+    let latestErrorCode: number | null | undefined = message.errorCode
+    let latestErrorMessage: string | null | undefined = message.errorMessage
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (
+        TERMINAL_FAILURE_STATUSES.has(latestStatus) ||
+        TERMINAL_SUCCESS_STATUSES.has(latestStatus)
+      ) {
+        break
+      }
+
+      await sleep(1000)
+      const refreshed = await client.messages(message.sid).fetch()
+      latestStatus = String(refreshed.status ?? latestStatus)
+      latestErrorCode = refreshed.errorCode
+      latestErrorMessage = refreshed.errorMessage
+    }
+
+    if (TERMINAL_FAILURE_STATUSES.has(latestStatus)) {
+      const code = latestErrorCode ? ` (kod ${latestErrorCode})` : ""
+      const details = latestErrorMessage ? ` - ${latestErrorMessage}` : ""
+      return {
+        status: "failed",
+        error: `Twilio status: ${latestStatus}${code}${details}`,
+      }
+    }
+
+    return {
+      status: "sent",
+      sid: message.sid,
+      to,
+      twilioStatus: latestStatus,
+      errorCode: latestErrorCode,
+      errorMessage: latestErrorMessage,
+    }
+  } catch (error) {
+    return {
+      status: "failed",
+      error: error instanceof Error ? error.message : "Nepoznata greška pri slanju SMS-a.",
+    }
+  }
+}
+
+export async function sendTransferDeletedSms(
+  input: SendTransferReceivedSmsInput
+): Promise<SmsSendResult> {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+  const from = process.env.TWILIO_FROM_NUMBER
+
+  if (!accountSid || !authToken || !from) {
+    return {
+      status: "skipped",
+      reason: "Twilio varijable nisu kompletno podešene.",
+    }
+  }
+
+  const to = normalizePhoneNumber(DRIVER_SMS_NUMBER)
+
+  if (!to.startsWith("+")) {
+    return {
+      status: "failed",
+      error: "Broj telefona mora biti u međunarodnom formatu (npr. +382...).",
+    }
+  }
+
+  const client = twilio(accountSid, authToken)
+  const korisnikShort = compactText(input.korisnik, 22)
+  const letShort = compactText(input.brojLetaNapomena, 18)
+  const relacijaShort = relacijaToValue(input.relacija)
+    .replace("apartman-aerodrom", "A->AP")
+    .replace("aerodrom-apartman", "AP->A")
+
+  const body = `OBRISAN: ${formatDateDisplay(input.datum)} ${formatTimeDisplay(input.vrijeme)} | ${relacijaShort} | Kor:${korisnikShort} | Let:${letShort}`
+
+  try {
+    const message = await client.messages.create({
+      to,
+      from,
+      body,
+    })
+
+    let latestStatus = String(message.status ?? "unknown")
+    let latestErrorCode: number | null | undefined = message.errorCode
+    let latestErrorMessage: string | null | undefined = message.errorMessage
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (
+        TERMINAL_FAILURE_STATUSES.has(latestStatus) ||
+        TERMINAL_SUCCESS_STATUSES.has(latestStatus)
+      ) {
+        break
+      }
+
+      await sleep(1000)
+      const refreshed = await client.messages(message.sid).fetch()
+      latestStatus = String(refreshed.status ?? latestStatus)
+      latestErrorCode = refreshed.errorCode
+      latestErrorMessage = refreshed.errorMessage
+    }
+
+    if (TERMINAL_FAILURE_STATUSES.has(latestStatus)) {
+      const code = latestErrorCode ? ` (kod ${latestErrorCode})` : ""
+      const details = latestErrorMessage ? ` - ${latestErrorMessage}` : ""
+      return {
+        status: "failed",
+        error: `Twilio status: ${latestStatus}${code}${details}`,
+      }
+    }
+
+    return {
+      status: "sent",
+      sid: message.sid,
+      to,
+      twilioStatus: latestStatus,
+      errorCode: latestErrorCode,
+      errorMessage: latestErrorMessage,
+    }
+  } catch (error) {
+    return {
+      status: "failed",
+      error: error instanceof Error ? error.message : "Nepoznata greška pri slanju SMS-a.",
+    }
+  }
+}

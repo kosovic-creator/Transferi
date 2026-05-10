@@ -1,8 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
-import { deleteTransfer, getTransferi } from "@/actions/transferi"
+import {
+  completeTransfer,
+  deleteTransferPermanentlySafe,
+  getTransferi,
+} from "@/actions/transferi"
 import { DeleteTransferDialog } from "@/app/transferi/delete-transfer-dialog"
+import { ExecuteTransferDialog } from "@/app/transferi/execute-transfer-dialog"
 import { TransferiToast } from "@/app/transferi/transferi-toast"
 
 export const dynamic = "force-dynamic"
@@ -38,14 +43,27 @@ export default async function Home({ searchParams }: HomePageProps) {
   const { toast } = await searchParams
   const transferi = await getTransferi()
 
-  async function handleDelete(formData: FormData) {
+  async function handleComplete(formData: FormData) {
     "use server"
 
     try {
-      await deleteTransfer(formData)
+      await completeTransfer(formData)
     } catch {
+      redirect("/?toast=execute-error")
+    }
+
+    redirect("/?toast=executed")
+  }
+
+  async function handleDeletePermanently(formData: FormData) {
+    "use server"
+
+    const result = await deleteTransferPermanentlySafe(formData)
+
+    if (!result.ok) {
       redirect("/?toast=delete-error")
     }
+
     redirect("/?toast=deleted")
   }
 
@@ -111,12 +129,20 @@ export default async function Home({ searchParams }: HomePageProps) {
                   Izmijeni
                 </Link>
 
+                <ExecuteTransferDialog
+                  id={transfer.id}
+                  datum={formatDateDisplay(transfer.datum)}
+                  vrijeme={formatTimeDisplay(transfer.vrijeme)}
+                  relacija={relacijaToValue(transfer.relacija)}
+                  action={handleComplete}
+                />
+
                 <DeleteTransferDialog
                   id={transfer.id}
                   datum={formatDateDisplay(transfer.datum)}
                   vrijeme={formatTimeDisplay(transfer.vrijeme)}
                   relacija={relacijaToValue(transfer.relacija)}
-                  action={handleDelete}
+                  action={handleDeletePermanently}
                 />
               </div>
             </article>
@@ -150,12 +176,20 @@ export default async function Home({ searchParams }: HomePageProps) {
                         Izmijeni
                       </Link>
 
+                      <ExecuteTransferDialog
+                        id={transfer.id}
+                        datum={formatDateDisplay(transfer.datum)}
+                        vrijeme={formatTimeDisplay(transfer.vrijeme)}
+                        relacija={relacijaToValue(transfer.relacija)}
+                        action={handleComplete}
+                      />
+
                       <DeleteTransferDialog
                         id={transfer.id}
                         datum={formatDateDisplay(transfer.datum)}
                         vrijeme={formatTimeDisplay(transfer.vrijeme)}
                         relacija={relacijaToValue(transfer.relacija)}
-                        action={handleDelete}
+                        action={handleDeletePermanently}
                       />
                     </div>
                   </td>
