@@ -47,7 +47,7 @@ export function DeleteTransferDialog({
   return (
     <Dialog>
       <DialogTrigger render={<Button variant="destructive" className="h-9" />}>
-        Obriši trajno
+        Otkaži
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
